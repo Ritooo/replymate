@@ -11,6 +11,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const PORT = process.env.PORT || 3000;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || 'replymate123';
 const ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+const IG_BUSINESS_ID = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
 const APP_SECRET = process.env.APP_SECRET;
 
 const SYSTEM_PROMPT = `Sen ReplyMate test asistanısın.
@@ -77,7 +78,7 @@ app.get('/auth/callback', (req, res) => {
 async function sendIGMessage(recipientId, text) {
   try {
     await axios.post(
-      'https://graph.facebook.com/v18.0/me/messages',
+      `https://graph.facebook.com/v18.0/${IG_BUSINESS_ID}/messages`,
       {
         recipient: { id: recipientId },
         message: { text },
