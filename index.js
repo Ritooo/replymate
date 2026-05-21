@@ -15,6 +15,7 @@ app.post('/webhook', (req, res) => {
   res.sendStatus(200)
 })
 
-app.listen(3000, () => {
-  console.log('Sunucu 3000 portunda çalışıyor')
+const PORT = process.env.PORT || 3000
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Sunucu ${PORT} portunda çalışıyor`)
 })
