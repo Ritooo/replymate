@@ -1,10 +1,28 @@
 {
   "name": "replymate",
   "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ritooo/replymate.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ritooo/replymate/issues"
+  },
+  "homepage": "https://github.com/Ritooo/replymate#readme",
   "dependencies": {
-    "express": "^4.21.0"
+    "@anthropic-ai/sdk": "^0.97.1",
+    "axios": "^1.16.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   }
 }

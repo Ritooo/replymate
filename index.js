@@ -1,21 +1,89 @@
-const express = require('express')
-const app = express()
-app.use(express.json())
+require('dotenv').config();
+const express = require('express');
+const Anthropic = require('@anthropic-ai/sdk');
+const axios = require('axios');
+
+const app = express();
+app.use(express.json());
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const PORT = process.env.PORT || 3000;
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN || 'replymate123';
+const ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+const APP_SECRET = process.env.APP_SECRET;
+
+const SYSTEM_PROMPT = `Sen ReplyMate test asistanısın.
+Türkçe, kısa ve nazik cevap ver.`;
+
+// -- Routes ----------------------------------------------------------------
+
+app.get('/test', (_req, res) => {
+  res.send('Sunucu çalışıyor');
+});
 
 app.get('/webhook', (req, res) => {
-  if (req.query['hub.verify_token'] === 'replymate123') {
-    res.send(req.query['hub.challenge'])
-  } else {
-    res.sendStatus(403)
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('Webhook doğrulandı');
+    return res.send(challenge);
   }
-})
+  res.sendStatus(403);
+});
 
-app.post('/webhook', (req, res) => {
-  console.log('Mesaj geldi:', JSON.stringify(req.body, null, 2))
-  res.sendStatus(200)
-})
+app.post('/webhook', async (req, res) => {
+  res.sendStatus(200); // Meta hemen yanıt ister
 
-const PORT = process.env.PORT || 3000
+  try {
+    const entries = req.body?.entry || [];
+    for (const entry of entries) {
+      for (const change of entry.messaging || []) {
+        const msg = change.message;
+        if (!msg || !msg.text) continue;
+
+        const senderId = change.sender?.id;
+        if (!senderId) continue;
+
+        const userMessage = msg.text;
+
+        const reply = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 300,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userMessage }],
+        });
+
+        const replyText = reply.content[0]?.text || 'Mesajını aldım.';
+
+        await sendIGMessage(senderId, replyText);
+      }
+    }
+  } catch (err) {
+    console.error('Webhook hatası:', err.message);
+  }
+});
+
+app.get('/auth/callback', (req, res) => {
+  const { code, state } = req.query;
+  console.log('OAuth callback:', { code, state });
+  res.send('OAuth callback alındı');
+});
+
+// -- Helpers ---------------------------------------------------------------
+
+async function sendIGMessage(recipientId, text) {
+  const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${ACCESS_TOKEN}`;
+  await axios.post(url, {
+    recipient: { id: recipientId },
+    message: { text },
+  });
+}
+
+// -- Start -----------------------------------------------------------------
+
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Sunucu ${PORT} portunda çalışıyor`)
-})
+  console.log(`Sunucu ${PORT} portunda çalışıyor`);
+});
