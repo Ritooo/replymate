@@ -14,6 +14,9 @@ const ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
 const IG_BUSINESS_ID = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
 const APP_SECRET = process.env.APP_SECRET;
 
+const PLATFORM = process.env.PLATFORM || 'instagram';
+const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+
 const SYSTEM_PROMPT = `Sen ReplyMate test asistanısın.
 Türkçe, kısa ve nazik cevap ver.`;
 
@@ -59,7 +62,7 @@ app.post('/webhook', async (req, res) => {
 
         const replyText = reply.content[0]?.text || 'Mesajını aldım.';
 
-        await sendIGMessage(senderId, replyText);
+        await sendMessage(senderId, replyText);
       }
     }
   } catch (err) {
@@ -74,6 +77,31 @@ app.get('/auth/callback', (req, res) => {
 });
 
 // -- Helpers ---------------------------------------------------------------
+
+async function sendMessage(recipientId, text) {
+  if (PLATFORM === 'messenger') {
+    return sendMessengerMessage(recipientId, text);
+  }
+  return sendIGMessage(recipientId, text);
+}
+
+async function sendMessengerMessage(recipientId, text) {
+  try {
+    await axios.post(
+      'https://graph.facebook.com/v18.0/me/messages',
+      {
+        recipient: { id: recipientId },
+        message: { text },
+      },
+      {
+        headers: { Authorization: `Bearer ${PAGE_ACCESS_TOKEN}` },
+      }
+    );
+  } catch (err) {
+    console.error('sendMessengerMessage hatası:', err.response?.data || err.message);
+    throw err;
+  }
+}
 
 async function sendIGMessage(recipientId, text) {
   try {
