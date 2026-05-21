@@ -75,11 +75,21 @@ app.get('/auth/callback', (req, res) => {
 // -- Helpers ---------------------------------------------------------------
 
 async function sendIGMessage(recipientId, text) {
-  const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${ACCESS_TOKEN}`;
-  await axios.post(url, {
-    recipient: { id: recipientId },
-    message: { text },
-  });
+  try {
+    await axios.post(
+      'https://graph.facebook.com/v18.0/me/messages',
+      {
+        recipient: { id: recipientId },
+        message: { text },
+      },
+      {
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      }
+    );
+  } catch (err) {
+    console.error('sendIGMessage hatası:', err.response?.data || err.message);
+    throw err;
+  }
 }
 
 // -- Start -----------------------------------------------------------------
